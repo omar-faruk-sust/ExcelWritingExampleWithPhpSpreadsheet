@@ -17,20 +17,32 @@ $sheet = $spreadsheet->getActiveSheet();
 
 // sample data
 $data= [
-  0 => [
-    "name"=>"David Miah", "age"=>23, "email" => "test@gmail.com", "country" => "Canada", "address" => "123, montrea, canada"
-  ],
-  1 => [
-    "name"=>"Omar Faruk", "age"=> 43, "email" => "test@gmail.com", "country" => "Bangladesh", "address" => "123, random address, canada"
-  ],
-  2 => [
-    "name"=>"Test Name", "age"=> 40, "email" => "test@gmail.com", "country" => "USA", "address" => "123, Tornto, canada"
-  ]
+    0 => [
+        0 => 'Group Admin',
+        1 => '12/09/2019 - 13:24',
+        2 => 'Voir',
+        3 => 'Mon compte',
+        4 => 'macOS/Chrome-76.0',
+      ],
+      1 => [
+        0 => 'Group Admin',
+        1 => '12/09/2019 - 13:25',
+        2 => 'Voir',
+        3 => 'Gestion des documents',
+        4 => 'macOS/Chrome-76.0',
+      ],
+      2 => [
+        0 => 'Group Admin',
+        1 => '17/06/2022 - 14:20',
+        2 => 'Voir',
+        3 => 'Accès refusé',
+        4 => 'macOS/Firefox-101.0',
+      ]
 ];
 
 //set column header
 //set your own column header
-$column_header=["Name","Age", "email", "Country", "Address"];
+$column_header=["Nom", "Date", "Actions", "Pages", "Appareil/Navigateur"];
 $j = 1;
 foreach($column_header as $x_value) {
   $sheet->setCellValueByColumnAndRow($j, 1, $x_value);
@@ -55,7 +67,7 @@ for($i = 0; $i < 50000; $i++)
 $writer = new Xlsx($spreadsheet);
 
 // Save .xlsx file to the files directory
-$writer->save('files/demo_without_cache.xlsx');
+$writer->save('files/demo_example.xlsx');
 
 $spreadsheet->disconnectWorksheets();
 unset($spreadsheet);
@@ -86,10 +98,10 @@ echo " Execution time of script = ".$execution_time." sec";
 
 /**
  * Here is the amount of time and memory without cell caching
- * Initial Memory use: 0.55MB
- * Final Memory use: 27.15MB
- * Peak Memory use: 120.75MB
- * Execution time of script = 41.267640829086 sec
+ * Initial Memory use: 0.43MB
+ * Final Memory use: 26.7MB
+ * Peak Memory use: 122.46MB
+ * Execution time of script = 41.365000963211 sec
  */
 
 ?>
