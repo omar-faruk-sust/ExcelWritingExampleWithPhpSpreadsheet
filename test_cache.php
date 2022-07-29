@@ -2,27 +2,34 @@
 
 require 'vendor/autoload.php';
 
+use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use OmarPackage\CustomCacheBridge;
+
 
 $start_time = microtime(true);
 $initial_memory = memory_get_usage();
 $initial_memory = memory_get_peak_usage();
+
+//Cache
+$client = new \Memcache();
+$client->connect('127.0.0.1', 11211);
+$pool = new \Cache\Adapter\Memcache\MemcacheCachePool($client);
+
+
+// $simpleCache = new \Cache\Bridge\SimpleCache\SimpleCacheBridge($pool);
+// \PhpOffice\PhpSpreadsheet\Settings::setCache($simpleCache);
+
+
+$myCustomCache = new CustomCacheBridge($pool, 360000);
+\PhpOffice\PhpSpreadsheet\Settings::setCache($myCustomCache);
 
 // Creates New Spreadsheet
 $spreadsheet = new Spreadsheet();
 
 // Retrieve the current active worksheet
 $sheet = $spreadsheet->getActiveSheet();
-
-//Cache
-$client = new \Memcache();
-//$memcache = memcache_connect('127.0.0.1',11211);
-$client->connect('127.0.0.1', 11211);
-$pool = new \Cache\Adapter\Memcache\MemcacheCachePool($client);
-$simpleCache = new \Cache\Bridge\SimpleCache\SimpleCacheBridge($pool);
-
-\PhpOffice\PhpSpreadsheet\Settings::setCache($simpleCache);
 
 
 // sample data
@@ -48,7 +55,7 @@ foreach($column_header as $x_value) {
 }
 
 //set value row
-for($i = 0; $i < 50000; $i++)
+for($i = 0; $i < 20000; $i++)
 {
   //set value for cell
   $row = $data[rand(0,2)];
@@ -63,12 +70,22 @@ for($i = 0; $i < 50000; $i++)
 
 // Write an .xlsx file
 $writer = new Xlsx($spreadsheet);
-
+$writer->setPreCalculateFormulas(false);
 // Save .xlsx file to the files directory
-$writer->save('files/demo_with_cache.xlsx');
+$writer->save('files/demo_with_cache1.xlsx');
 
-$spreadsheet->disconnectWorksheets();
-unset($spreadsheet);
+// then release the memory
+$spreadsheet->__destruct();
+$sheet->__destruct();
+$sheet = null;
+$spreadsheet = null;
+$writer = null;
+unset($writer);
+
+Settings::getCache()->clear();
+gc_collect_cycles();
+
+
 
 echo "\n\r";
 $final_memory = memory_get_usage();
@@ -94,10 +111,20 @@ echo "</br>";
 echo " Execution time of script = ".$execution_time." sec";
 
 /**
+ * For 10k
  * Using Memcache we can save bit of memory
  * Initial Memory use: 0.43MB
- * Final Memory use: 16.8MB
- * Peak Memory use: 120.4MB
- * Execution time of script = 39.248769044876 sec
+ * Final Memory use: 1.26MB
+ * Peak Memory use: 20.65MB
+ * Execution time of script = 76.392807006836 sec
  */
+
+
+ /** 
+  * For 20k
+  * Initial Memory use: 0.43MB
+  * Final Memory use: 1.38MB
+  * Peak Memory use: 34.14MB
+  * Execution time of script = 113.22411704063 sec
+  */
 ?>

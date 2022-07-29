@@ -5,6 +5,7 @@ require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+
 $start_time = microtime(true);
 $initial_memory = memory_get_usage();
 $initial_memory = memory_get_peak_usage();
@@ -38,7 +39,7 @@ foreach($column_header as $x_value) {
 }
 
 //set value row
-for($i = 0; $i < 50000; $i++)
+for($i = 0; $i < 40000; $i++)
 {
   //set value for cell
   $row = $data[rand(0,2)];
@@ -54,11 +55,21 @@ for($i = 0; $i < 50000; $i++)
 // Write an .xlsx file
 $writer = new Xlsx($spreadsheet);
 
+$writer->setPreCalculateFormulas(false);
+
 // Save .xlsx file to the files directory
 $writer->save('files/demo_without_cache.xlsx');
 
-$spreadsheet->disconnectWorksheets();
-unset($spreadsheet);
+// then release the memory
+$spreadsheet->__destruct();
+$sheet->__destruct();
+$sheet = null;
+$spreadsheet = null;
+$writer = null;
+unset($writer);
+gc_collect_cycles();
+
+
 
 echo "\n\r";
 $final_memory = memory_get_usage();
@@ -85,11 +96,19 @@ echo " Execution time of script = ".$execution_time." sec";
 
 
 /**
+ * For 10k
  * Here is the amount of time and memory without cell caching
- * Initial Memory use: 0.55MB
- * Final Memory use: 27.15MB
- * Peak Memory use: 120.75MB
- * Execution time of script = 41.267640829086 sec
+ * Initial Memory use: 0.43MB
+ * Final Memory use: 5.55MB
+ * Peak Memory use: 28.24MB
+ * Execution time of script = 7.3950650691986 sec
  */
 
+  /** 
+   * For 20k
+  * Initial Memory use: 0.43MB
+  * Final Memory use: 8.05MB
+  * Peak Memory use: 51.8MB
+  * Execution time of script = 15.508337974548 sec
+  */
 ?>

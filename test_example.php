@@ -50,7 +50,7 @@ foreach($column_header as $x_value) {
 }
 
 //set value row
-for($i = 0; $i < 50000; $i++)
+for($i = 0; $i < 10000; $i++)
 {
   //set value for cell
   $row = $data[rand(0,2)];
