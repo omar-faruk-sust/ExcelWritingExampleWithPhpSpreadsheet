@@ -7,6 +7,7 @@
     "require": {
         "phpoffice/phpspreadsheet": "^1.24",
         "cache/simple-cache-bridge": "^1.2",
-        "cache/memcache-adapter": "^1.2"
+        "cache/memcache-adapter": "^1.2",
+        "symfony/cache": "^5.4"
     }
 }

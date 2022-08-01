@@ -1,20 +1,19 @@
 <?php
 
 require 'vendor/autoload.php';
-
+use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use OmarPackage\CustomCacheBridge;
 
 
 $start_time = microtime(true);
 $initial_memory = memory_get_usage();
 $initial_memory = memory_get_peak_usage();
 
-// Creates New Spreadsheet
-$spreadsheet = new Spreadsheet();
+$write_limit_per_itteration = 50000;
+$total_number_of_records    = 500000;
 
-// Retrieve the current active worksheet
-$sheet = $spreadsheet->getActiveSheet();
 
 // sample data
 $data= [
@@ -29,45 +28,76 @@ $data= [
   ]
 ];
 
+$actualData = [];
+for($i = 0; $i < $total_number_of_records; $i++)
+{
+   //set value for cell
+   $actualData[] = $data[rand(0,2)];
+}
+
+$total_itteration_needed = $total_number_of_records / $write_limit_per_itteration;
+
 //set column header
 //set your own column header
-$column_header=["Name","Age", "email", "Country", "Address"];
-$j = 1;
-foreach($column_header as $x_value) {
-  $sheet->setCellValueByColumnAndRow($j, 1, $x_value);
-  $j++;
-}
+$column_header=["Name", "Age", "email", "Country", "Address"];
 
-//set value row
-for($i = 0; $i < 40000; $i++)
-{
-  //set value for cell
-  $row = $data[rand(0,2)];
+$rowCounter  = 0;
+$dataCounter = 0;
+
+for($iteration = 1; $iteration <= $total_itteration_needed; $iteration++) {
+
+  $currentItterationLimitTotal = $iteration * $write_limit_per_itteration;
+
+  // Creates New Spreadsheet
+  $spreadsheet = new Spreadsheet();
+
+  // Retrieve the current active worksheet
+  $sheet = $spreadsheet->getActiveSheet();
+
+  //Write the header
   $j = 1;
-
-  foreach($row as $x => $x_value) {
-    $sheet->setCellValueByColumnAndRow($j, $i + 2, $x_value);
-    $j = $j + 1;
+  foreach($column_header as $x_value) {
+    $sheet->setCellValueByColumnAndRow($j, 1, $x_value);
+    $j++;
   }
 
+
+  for($r = 0; $r < $currentItterationLimitTotal; $r++) {
+
+    $j = 1;
+
+    $data = $actualData[$rowCounter];
+
+    //Write the data rows
+    foreach($data as $x => $x_value) {
+      $sheet->setCellValueByColumnAndRow($j, $dataCounter + 2, $x_value);
+      $j = $j + 1;
+    }
+    
+    
+    if($rowCounter == $currentItterationLimitTotal)
+    {
+      // Write an .xlsx file
+      $writer = new Xlsx($spreadsheet);
+      $writer->setPreCalculateFormulas(false);
+
+      // Save .xlsx file to the files directory
+      $writer->save('files/'.'demo_without_cache_'.$iteration.'.xlsx');
+
+      // then release the memory
+      $spreadsheet->__destruct();
+      $sheet->__destruct();
+      $sheet = null;
+      $spreadsheet = null;
+      $writer = null;
+      unset($writer);
+      gc_collect_cycles();
+    }
+
+    $rowCounter++;
+  }
+    
 }
-
-// Write an .xlsx file
-$writer = new Xlsx($spreadsheet);
-
-$writer->setPreCalculateFormulas(false);
-
-// Save .xlsx file to the files directory
-$writer->save('files/demo_without_cache.xlsx');
-
-// then release the memory
-$spreadsheet->__destruct();
-$sheet->__destruct();
-$sheet = null;
-$spreadsheet = null;
-$writer = null;
-unset($writer);
-gc_collect_cycles();
 
 
 
@@ -103,12 +133,4 @@ echo " Execution time of script = ".$execution_time." sec";
  * Peak Memory use: 28.24MB
  * Execution time of script = 7.3950650691986 sec
  */
-
-  /** 
-   * For 20k
-  * Initial Memory use: 0.43MB
-  * Final Memory use: 8.05MB
-  * Peak Memory use: 51.8MB
-  * Execution time of script = 15.508337974548 sec
-  */
 ?>
